@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dashboard - Find My Phone</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>Your Phones</h1>
+    <form id="addPhoneForm">
+      <input type="text" id="phoneName" placeholder="Phone Name (e.g. My iPhone)" required />
+      <input type="text" id="phoneId" placeholder="Phone ID (IMEI or Serial)" required />
+      <button type="submit">Add Phone</button>
+    </form>
+    <ul id="phoneList"></ul>
+    <button id="logoutBtn">Logout</button>
+  </div>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
+    if (!token) {
+      window.location.href = '/';
+    }
+
+    const phoneList = document.getElementById('phoneList');
+    const addPhoneForm = document.getElementById('addPhoneForm');
+    const logoutBtn = document.getElementById('logoutBtn');
+
+    // Fetch user's phones
+    async function loadPhones() {
+      const res = await fetch('/api/phones', {
+        headers: { Authorization: 'Bearer ' + token }
+      });
+      const phones = await res.json();
+      phoneList.innerHTML = '';
+      phones.forEach(phone => {
+        const li = document.createElement('li');
+        li.textContent = `${phone.name} - ID: ${phone.id}`;
+        phoneList.appendChild(li);
+      });
+    }
+
+    addPhoneForm.addEventListener('submit', async e => {
+      e.preventDefault();
+      const name = document.getElementById('phoneName').value;
+      const id = document.getElementById('phoneId').value;
+
+      const res = await fetch('/api/phones', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + token
+        },
+        body: JSON.stringify({ name, id })
+      });
+      if (res.ok) {
+        document.getElementById('phoneName').value = '';
+        document.getElementById('phoneId').value = '';
+        loadPhones();
+      } else {
+        alert('Failed to add phone');
+      }
+    });
+
+    logoutBtn.addEventListener('click', () => {
+      window.location.href = '/';
+    });
+
+    loadPhones();
+  </script>
+</body>
+</html>
